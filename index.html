@@ -20,10 +20,9 @@
 
         const FIXED_TOPICS = ['תנ"ך', 'משנה', 'תלמוד', 'הלכה', 'אמונה', 'מוסר', 'פנימיות'];
 
-        // רשימות הפרשיות המלאות לחמישה חומשי תורה
         const GENESIS_PARASHOT = ['בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ', 'ויגש', 'ויחי'];
         const EXODUS_PARASHOT = ['שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה', 'כי תשא', 'ויקהל', 'פקודה'];
-        const LEVITICUS_PARASHOT = ['ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע', 'אחري موت (אחרי מות)', 'קדושים', 'אמור', 'בהר', 'בחקתי'];
+        const LEVITICUS_PARASHOT = ['ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים', 'אמור', 'בהר', 'בחוקתי'];
         const NUMBERS_PARASHOT = ['במדבר', 'נשא', 'בהעלתך', 'שלח לך', 'קרח', 'חקת', 'בלק', 'פנחס', 'מטות', 'מסעי'];
         const DEUTERONOMY_PARASHOT = ['דברים', 'ואתחנן', 'עקב', 'ראה', 'שופטים', 'כי תצא', 'כי תבוא', 'נצבים', 'וילך', 'האזינו', 'וזאת הברכה'];
 
@@ -116,7 +115,8 @@
 
         function App() {
             const [topicsData, setTopicsData] = useState(() => {
-                const saved = localStorage.getItem('study_system_v18') || 
+                const saved = localStorage.getItem('study_system_v19') || 
+                              localStorage.getItem('study_system_v18') || 
                               localStorage.getItem('study_system_v17') || 
                               localStorage.getItem('study_system_v16');
                 if (saved) return JSON.parse(saved);
@@ -140,7 +140,7 @@
             const todayRowRef = useRef(null);
 
             useEffect(() => {
-                localStorage.setItem('study_system_v18', JSON.stringify(topicsData));
+                localStorage.setItem('study_system_v19', JSON.stringify(topicsData));
             }, [topicsData]);
 
             useEffect(() => {
@@ -300,7 +300,6 @@
                 )
             );
 
-            // משימות שלא בוצעו שזמנן עבר (פספוסים)
             const overdueTasks = allTasks.filter(task => !task.completed && task.dueDate < todayStr);
 
             const uniqueDates = [];
@@ -506,7 +505,6 @@
                     {activeTab === 'calendar' && (
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
                             
-                            {/* לוח השנה המרכזי (3 עמודות במסכים רחבים) */}
                             <div className="lg:col-span-3 space-y-3">
                                 <div className="bg-white p-4 rounded-2xl shadow-2xs border border-slate-200 flex items-center justify-between">
                                     <h2 className="text-base font-bold text-emerald-900">לוח שנה ומעקב יומי</h2>
@@ -576,7 +574,6 @@
                                 </div>
                             </div>
 
-                            {/* עמודה שמאלית: משימות שלא בוצעו (פיגורים) */}
                             <div className="bg-white p-4 rounded-2xl shadow-2xs border border-rose-200 space-y-3 lg:sticky lg:top-4">
                                 <h3 className="text-sm font-extrabold text-rose-900 border-b pb-2 flex items-center justify-between">
                                     <span>⚠️ משימות שלא בוצעו</span>
