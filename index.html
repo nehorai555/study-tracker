@@ -57,7 +57,7 @@
 
         function App() {
             const [topicsData, setTopicsData] = useState(() => {
-                const saved = localStorage.getItem('study_system_v13');
+                const saved = localStorage.getItem('study_system_v14');
                 if (saved) return JSON.parse(saved);
                 return FIXED_TOPICS.map(name => ({ id: name, name, books: [] }));
             });
@@ -72,48 +72,51 @@
             const [trackTopicName, setTrackTopicName] = useState(null);
             const [trackBookId, setTrackBookId] = useState(null);
 
+            // טופס הוספת ספר חדש עם מספר פרקים אוטומטי
             const [inputTopic, setInputTopic] = useState(FIXED_TOPICS[0]);
             const [inputBook, setInputBook] = useState('');
-            const [inputChapter, setInputChapter] = useState('');
-            const [inputDueDate, setInputDueDate] = useState('');
+            const [inputTotalChapters, setInputTotalChapters] = useState('');
 
             useEffect(() => {
-                localStorage.setItem('study_system_v13', JSON.stringify(topicsData));
+                localStorage.setItem('study_system_v14', JSON.stringify(topicsData));
             }, [topicsData]);
 
-            const handleAddNewTask = (e) => {
+            const handleAddBookWithChapters = (e) => {
                 e.preventDefault();
-                if (!inputBook.trim() || !inputChapter.trim()) return;
-
                 const bookName = inputBook.trim();
-                const chapterName = inputChapter.trim();
-                const dueDate = inputDueDate || new Date().toISOString().split('T')[0];
+                const totalChapters = parseInt(inputTotalChapters);
+                if (!bookName || isNaN(totalChapters) || totalChapters <= 0) return;
 
                 let newTopics = [...topicsData];
                 let topicObj = newTopics.find(t => t.name === inputTopic);
-
                 if (!topicObj) {
                     topicObj = { id: inputTopic, name: inputTopic, books: [] };
                     newTopics.push(topicObj);
                 }
 
-                let bookObj = topicObj.books.find(b => b.name === bookName);
-                if (!bookObj) {
-                    bookObj = { id: Date.now().toString(), name: bookName, chapters: [] };
-                    topicObj.books.push(bookObj);
+                // יצירת רשימת הפרקים אוטומטית
+                const chapters = [];
+                const defaultDate = new Date().toISOString().split('T')[0];
+                for (let i = 1; i <= totalChapters; i++) {
+                    chapters.push({
+                        id: `${Date.now()}-${i}`,
+                        name: `פרק/סימן ${i}`,
+                        count: 0,
+                        dueDate: defaultDate,
+                        completed: false
+                    });
                 }
 
-                bookObj.chapters.push({
-                    id: (Date.now() + 1).toString(),
-                    name: chapterName,
-                    count: 0,
-                    dueDate: dueDate,
-                    completed: false
-                });
+                const newBook = {
+                    id: Date.now().toString(),
+                    name: bookName,
+                    chapters: chapters
+                };
 
+                topicObj.books.push(newBook);
                 setTopicsData(newTopics);
-                setInputChapter('');
-                setInputDueDate('');
+                setInputBook('');
+                setInputTotalChapters('');
             };
 
             const toggleChapterCompletion = (topicName, bookId, chapterId, currentStatus) => {
@@ -133,6 +136,25 @@
                                         completed: nextStatus,
                                         count: nextStatus && c.count === 0 ? 1 : c.count
                                     };
+                                })
+                            };
+                        })
+                    };
+                }));
+            };
+
+            const updateChapterDueDate = (topicName, bookId, chapterId, newDate) => {
+                setTopicsData(topicsData.map(t => {
+                    if (t.name !== topicName) return t;
+                    return {
+                        ...t,
+                        books: t.books.map(b => {
+                            if (b.id !== bookId) return b;
+                            return {
+                                ...b,
+                                chapters: b.chapters.map(c => {
+                                    if (c.id !== chapterId) return c;
+                                    return { ...c, dueDate: newDate };
                                 })
                             };
                         })
@@ -160,12 +182,10 @@
                 }));
             };
 
-            // חישוב אחוזי השלמת לימוד לספר (מבוناد על סך הפרקים שהושלמו / סך הפרקים בספר)
             const getCurriculumBookStats = (chapters) => {
-                if (chapters.length === 0) return { completedCount: 0, totalCount: 0, percentage: 0 };
+                if (chapters.length === 0) return { completedCount: 0, totalCount: 0 };
                 const completedCount = chapters.filter(c => c.completed).length;
-                const percentage = Math.round((completedCount / chapters.length) * 100);
-                return { completedCount, totalCount: chapters.length, percentage };
+                return { completedCount, totalCount: chapters.length };
             };
 
             const getTrackingBookStats = (chapters) => {
@@ -221,14 +241,14 @@
                         </div>
                     </header>
 
-                    {/* לשונית 1: תוכנית לימודים (היררכיה: נושא ➔ ספר ➔ פרקים עם אחוזים) */}
+                    {/* לשונית 1: תוכנית לימודים */}
                     {activeTab === 'curriculum' && (
                         <div className="space-y-6">
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                                 <h2 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                    <span>➕</span> הוספת פרק/סימן חדש לתוכנית
+                                    <span>➕</span> הוספת ספר חדש עם מספר פרקים אוטומטי
                                 </h2>
-                                <form onSubmit={handleAddNewTask} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                                <form onSubmit={handleAddBookWithChapters} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 mb-1">נושא קבוע</label>
                                         <select 
@@ -239,7 +259,7 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1">ספר / מסכת</label>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1">שם הספר / מסכת</label>
                                         <input 
                                             type="text" placeholder="שם הספר..." value={inputBook}
                                             onChange={e => setInputBook(e.target.value)}
@@ -247,28 +267,20 @@
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1">פרק / סימן</label>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1">מספר פרקים / סימנים</label>
                                         <input 
-                                            type="text" placeholder="שם הפרק..." value={inputChapter}
-                                            onChange={e => setInputChapter(e.target.value)}
+                                            type="number" min="1" placeholder="לדוגמה: 10" value={inputTotalChapters}
+                                            onChange={e => setInputTotalChapters(e.target.value)}
                                             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-600" required
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1">תאריך יעד</label>
-                                        <input 
-                                            type="date" value={inputDueDate}
-                                            onChange={e => setInputDueDate(e.target.value)}
-                                            className="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm focus:outline-emerald-600"
-                                        />
-                                    </div>
                                     <div className="flex items-end">
-                                        <button type="submit" className="w-full bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-emerald-700">הוסף למערכת</button>
+                                        <button type="submit" className="w-full bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-emerald-700">צור ספר ופרקים</button>
                                     </div>
                                 </form>
                             </div>
 
-                            {/* רמה א': בחירת נושא בתוכנית לימודים */}
+                            {/* רמה א': בחירת נושא */}
                             {!currTopicName && (
                                 <div className="space-y-4">
                                     <h2 className="text-xl font-bold text-emerald-900">בחר נושא לימוד:</h2>
@@ -289,7 +301,7 @@
                                 </div>
                             )}
 
-                            {/* רמה ב': בחירת ספר מתוך הנושא בתוכנית לימודים */}
+                            {/* רמה ב': בחירת ספר מתוך הנושא */}
                             {currTopicName && !currBookId && (() => {
                                 const topic = topicsData.find(t => t.name === currTopicName);
                                 if (!topic) return null;
@@ -317,8 +329,6 @@
                                                                 <h3 className="text-lg font-bold text-slate-800">{book.name}</h3>
                                                                 <p className="text-xs text-slate-400 mt-0.5">{stats.completedCount} מתוך {stats.totalCount} פרקים הושלמו</p>
                                                             </div>
-
-                                                            {/* מעגל התקדמות אחוזי השלמת הלימוד לספר */}
                                                             <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
                                                                 <CircularProgress count={stats.completedCount} max={stats.totalCount || 1} colorClass="text-emerald-600" label="השלמה" />
                                                             </div>
@@ -331,7 +341,7 @@
                                 );
                             })()}
 
-                            {/* רמה ג': הצגת הפרקים של הספר הנבחר בתוכנית לימודים */}
+                            {/* רמה ג': הצגת הפרקים והגדרת תאריך יעד לכל פרק */}
                             {currTopicName && currBookId && (() => {
                                 const topic = topicsData.find(t => t.name === currTopicName);
                                 const book = topic?.books.find(b => b.id === currBookId);
@@ -346,23 +356,31 @@
 
                                         <div className="grid grid-cols-1 gap-3">
                                             {book.chapters.map(chapter => {
-                                                const isOverdue = !chapter.completed && new Date(chapter.dueDate) < new Date(new Date().toDateString());
+                                                const isOverdue = !chapter.completed && new Date(chapter.dueDate) < new Date(todayStr);
                                                 return (
-                                                    <div key={chapter.id} className={`p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 ${chapter.completed ? 'bg-emerald-50 border-emerald-300' : isOverdue ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
-                                                        <div className="flex items-center gap-3">
+                                                    <div key={chapter.id} className={`p-4 rounded-xl border shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 ${chapter.completed ? 'bg-emerald-50 border-emerald-300' : isOverdue ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
+                                                        <div className="flex items-center gap-3 w-full sm:w-auto">
                                                             <input 
                                                                 type="checkbox" checked={chapter.completed} 
                                                                 onChange={() => toggleChapterCompletion(topic.name, book.id, chapter.id, chapter.completed)}
-                                                                className="w-6 h-6 accent-emerald-600 rounded cursor-pointer"
+                                                                className="w-6 h-6 accent-emerald-600 rounded cursor-pointer shrink-0"
                                                             />
                                                             <div>
                                                                 <h4 className={`font-bold text-base ${chapter.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>{chapter.name}</h4>
-                                                                <p className="text-xs text-slate-400">יעד לימוד: {getHebrewDateString(chapter.dueDate)}</p>
+                                                                <p className="text-xs text-slate-400">תאריך יעד בלוח שנה</p>
                                                             </div>
                                                         </div>
-                                                        <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${chapter.completed ? 'bg-emerald-100 text-emerald-800' : isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}`}>
-                                                            {chapter.completed ? 'נלמד ✓' : isOverdue ? 'עבר הזמן' : 'ממתין'}
-                                                        </span>
+
+                                                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                                            <input 
+                                                                type="date" value={chapter.dueDate}
+                                                                onChange={e => updateChapterDueDate(topic.name, book.id, chapter.id, e.target.value)}
+                                                                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-emerald-600"
+                                                            />
+                                                            <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${chapter.completed ? 'bg-emerald-100 text-emerald-800' : isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}`}>
+                                                                {chapter.completed ? 'נלמד ✓' : isOverdue ? 'עבר הזמן (אדום)' : 'ממתין'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
@@ -373,11 +391,11 @@
                         </div>
                     )}
 
-                    {/* לשונית 2: לוח שנה */}
+                    {/* לשונית 2: לוח שנה (גלילה, תאריך מימין, שורת חזרות לפי 7 קטגוריות) */}
                     {activeTab === 'calendar' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 overflow-x-auto">
-                            <h2 className="text-xl font-bold text-emerald-900 border-b pb-2">לוח שנה ומעקב יומי</h2>
-                            <div className="min-w-[900px] space-y-3">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                            <h2 className="text-xl font-bold text-emerald-900 border-b pb-2">לוח שנה ומעקב יומי (גלגול חופשי)</h2>
+                            <div className="max-h-[700px] overflow-y-auto space-y-4 pr-1">
                                 {uniqueDates.map(dateStr => {
                                     const isToday = dateStr === todayStr;
                                     const isPast = new Date(dateStr) < new Date(todayStr);
@@ -387,37 +405,42 @@
                                     const hebrewDateText = getHebrewDateString(dateStr);
 
                                     return (
-                                        <div key={dateStr} className={`rounded-xl border p-4 transition ${isYellow ? 'bg-amber-100/80 border-amber-300 shadow-sm' : 'bg-white border-slate-200'}`}>
-                                            <div className="flex items-center justify-between mb-3 border-b border-amber-200/60 pb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${isToday ? 'bg-amber-400 text-slate-900 shadow-sm' : 'bg-amber-200/70 text-slate-800'}`}>
+                                        <div key={dateStr} className={`rounded-xl border p-4 transition ${isYellow ? 'bg-amber-100/90 border-amber-300 shadow-sm' : 'bg-white border-slate-200'}`}>
+                                            
+                                            {/* כותרת התאריך - מופיעה מצד ימין */}
+                                            <div className="flex items-center justify-between mb-3 border-b border-amber-200/80 pb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${isToday ? 'bg-amber-400 text-slate-900 shadow-sm' : 'bg-amber-200/80 text-slate-800'}`}>
                                                         {hebrewDateText} {isToday ? '(היום)' : ''}
                                                     </span>
                                                     <span className="text-xs text-slate-500">({dateStr})</span>
                                                 </div>
                                             </div>
 
-                                            {/* שורת 7 הנושאים הקבועים */}
+                                            {/* שורת 7 הנושאים הקבועים - משימות */}
                                             <div className="grid grid-cols-7 gap-2">
                                                 {FIXED_TOPICS.map(topicName => {
                                                     const topicTasks = dateTasks.filter(t => t.topicName === topicName);
                                                     return (
-                                                        <div key={topicName} className="bg-white/90 p-2.5 rounded-lg border border-slate-200 min-h-[75px] flex flex-col justify-between">
+                                                        <div key={topicName} className="bg-white/95 p-2.5 rounded-lg border border-slate-200 min-h-[85px] flex flex-col justify-between">
                                                             <div className="text-[11px] font-bold text-emerald-800 border-b pb-1 mb-1">{topicName}</div>
                                                             <div className="space-y-1.5 flex-1">
                                                                 {topicTasks.length === 0 ? (
-                                                                    <span className="text-[10px] text-slate-300 block text-center mt-2">-</span>
+                                                                    <span className="text-[10px] text-slate-300 block text-center mt-3">-</span>
                                                                 ) : (
-                                                                    topicTasks.map(task => (
-                                                                        <div key={task.id} className="flex items-center justify-between gap-1 bg-slate-50 p-1 rounded text-[11px]">
-                                                                            <span className={`truncate font-medium ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} title={task.name}>{task.bookName}: {task.name}</span>
-                                                                            <input 
-                                                                                type="checkbox" checked={task.completed}
-                                                                                onChange={() => toggleChapterCompletion(task.topicName, task.bookId, task.id, task.completed)}
-                                                                                className="accent-emerald-600 w-4 h-4 shrink-0 cursor-pointer"
-                                                                            />
-                                                                        </div>
-                                                                    ))
+                                                                    topicTasks.map(task => {
+                                                                        const isOverdueTask = !task.completed && new Date(task.dueDate) < new Date(todayStr);
+                                                                        return (
+                                                                            <div key={task.id} className={`flex items-center justify-between gap-1 p-1 rounded text-[11px] border ${task.completed ? 'bg-emerald-50 border-emerald-200' : isOverdueTask ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold' : 'bg-slate-50 border-slate-200'}`}>
+                                                                                <span className={`truncate ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} title={`${task.bookName}: ${task.name}`}>{task.bookName}: {task.name}</span>
+                                                                                <input 
+                                                                                    type="checkbox" checked={task.completed}
+                                                                                    onChange={() => toggleChapterCompletion(task.topicName, task.bookId, task.id, task.completed)}
+                                                                                    className="accent-emerald-600 w-4 h-4 shrink-0 cursor-pointer"
+                                                                                />
+                                                                            </div>
+                                                                        );
+                                                                    })
                                                                 )}
                                                             </div>
                                                         </div>
@@ -425,11 +448,19 @@
                                                 })}
                                             </div>
 
-                                            {/* שורת חזרות נפרדת */}
-                                            <div className="mt-3 bg-slate-100 p-3 rounded-lg border border-slate-200 flex items-center justify-between">
-                                                <span className="text-xs font-bold text-slate-600">חזרות לימוד (יומי):</span>
-                                                <span className="text-xs text-slate-500">למעקב מפורט היכנס ללשונית "מעקב חזרות"</span>
+                                            {/* שורת חזרות נפרדת (רקע אפרפר) - מחולקת גם היא ל-7 עמודות לפי קטגוריות */}
+                                            <div className="mt-3 bg-slate-200/80 p-3 rounded-lg border border-slate-300 space-y-2">
+                                                <div className="text-xs font-bold text-slate-700">חזרות לימוד (יומי - לפי קטגוריות):</div>
+                                                <div className="grid grid-cols-7 gap-2">
+                                                    {FIXED_TOPICS.map(topicName => (
+                                                        <div key={`rep-${topicName}`} className="bg-white/80 p-2 rounded border border-slate-200 min-h-[45px] flex flex-col justify-center items-center text-center">
+                                                            <span className="text-[10px] font-bold text-slate-500 mb-0.5">{topicName}</span>
+                                                            <span className="text-[10px] text-slate-400">למעקב בקש לחזרות</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
+
                                         </div>
                                     );
                                 })}
