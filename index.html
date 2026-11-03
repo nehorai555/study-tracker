@@ -57,28 +57,25 @@
 
         function App() {
             const [topicsData, setTopicsData] = useState(() => {
-                const saved = localStorage.getItem('study_system_v14');
+                const saved = localStorage.getItem('study_system_v15');
                 if (saved) return JSON.parse(saved);
                 return FIXED_TOPICS.map(name => ({ id: name, name, books: [] }));
             });
 
             const [activeTab, setActiveTab] = useState('curriculum');
             
-            // ניווט היררכי לתוכנית לימודים
             const [currTopicName, setCurrTopicName] = useState(null);
             const [currBookId, setCurrBookId] = useState(null);
 
-            // ניווט היררכי למעקב חזרות
             const [trackTopicName, setTrackTopicName] = useState(null);
             const [trackBookId, setTrackBookId] = useState(null);
 
-            // טופס הוספת ספר חדש עם מספר פרקים אוטומטי
             const [inputTopic, setInputTopic] = useState(FIXED_TOPICS[0]);
             const [inputBook, setInputBook] = useState('');
             const [inputTotalChapters, setInputTotalChapters] = useState('');
 
             useEffect(() => {
-                localStorage.setItem('study_system_v14', JSON.stringify(topicsData));
+                localStorage.setItem('study_system_v15', JSON.stringify(topicsData));
             }, [topicsData]);
 
             const handleAddBookWithChapters = (e) => {
@@ -94,15 +91,13 @@
                     newTopics.push(topicObj);
                 }
 
-                // יצירת רשימת הפרקים אוטומטית
                 const chapters = [];
-                const defaultDate = new Date().toISOString().split('T')[0];
                 for (let i = 1; i <= totalChapters; i++) {
                     chapters.push({
                         id: `${Date.now()}-${i}`,
                         name: `פרק/סימן ${i}`,
                         count: 0,
-                        dueDate: defaultDate,
+                        dueDate: '', // ריק עד שהמשתמש יבחר
                         completed: false
                     });
                 }
@@ -205,14 +200,18 @@
 
             const allTasks = topicsData.flatMap(t => 
                 t.books.flatMap(b => 
-                    b.chapters.map(c => ({ ...c, topicName: t.name, bookName: b.name, bookId: b.id }))
+                    b.chapters.filter(c => c.dueDate !== '').map(c => ({ ...c, topicName: t.name, bookName: b.name, bookId: b.id }))
                 )
             );
 
-            const uniqueDates = Array.from(new Set(allTasks.map(task => task.dueDate))).sort();
             const todayStr = new Date().toISOString().split('T')[0];
-            if (!uniqueDates.includes(todayStr)) {
-                uniqueDates.unshift(todayStr);
+            
+            // יצירת טווח תאריכים לגלילה (למשל, חודש אחורה וחודש קדימה מהיום)
+            const uniqueDates = [];
+            for (let i = -30; i <= 30; i++) {
+                const d = new Date(todayStr);
+                d.setDate(d.getDate() + i);
+                uniqueDates.push(d.toISOString().split('T')[0]);
             }
 
             return (
@@ -280,7 +279,6 @@
                                 </form>
                             </div>
 
-                            {/* רמה א': בחירת נושא */}
                             {!currTopicName && (
                                 <div className="space-y-4">
                                     <h2 className="text-xl font-bold text-emerald-900">בחר נושא לימוד:</h2>
@@ -301,7 +299,6 @@
                                 </div>
                             )}
 
-                            {/* רמה ב': בחירת ספר מתוך הנושא */}
                             {currTopicName && !currBookId && (() => {
                                 const topic = topicsData.find(t => t.name === currTopicName);
                                 if (!topic) return null;
@@ -341,7 +338,6 @@
                                 );
                             })()}
 
-                            {/* רמה ג': הצגת הפרקים והגדרת תאריך יעד לכל פרק */}
                             {currTopicName && currBookId && (() => {
                                 const topic = topicsData.find(t => t.name === currTopicName);
                                 const book = topic?.books.find(b => b.id === currBookId);
@@ -356,7 +352,7 @@
 
                                         <div className="grid grid-cols-1 gap-3">
                                             {book.chapters.map(chapter => {
-                                                const isOverdue = !chapter.completed && new Date(chapter.dueDate) < new Date(todayStr);
+                                                const isOverdue = !chapter.completed && chapter.dueDate !== '' && new Date(chapter.dueDate) < new Date(todayStr);
                                                 return (
                                                     <div key={chapter.id} className={`p-4 rounded-xl border shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 ${chapter.completed ? 'bg-emerald-50 border-emerald-300' : isOverdue ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
                                                         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -364,6 +360,7 @@
                                                                 type="checkbox" checked={chapter.completed} 
                                                                 onChange={() => toggleChapterCompletion(topic.name, book.id, chapter.id, chapter.completed)}
                                                                 className="w-6 h-6 accent-emerald-600 rounded cursor-pointer shrink-0"
+                                                                disabled={chapter.dueDate === ''} // מניעת סימון אם אין תאריך
                                                             />
                                                             <div>
                                                                 <h4 className={`font-bold text-base ${chapter.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>{chapter.name}</h4>
@@ -378,7 +375,7 @@
                                                                 className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-emerald-600"
                                                             />
                                                             <span className={`text-xs px-3 py-1.5 rounded-full font-bold ${chapter.completed ? 'bg-emerald-100 text-emerald-800' : isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}`}>
-                                                                {chapter.completed ? 'נלמד ✓' : isOverdue ? 'עבר הזמן (אדום)' : 'ממתין'}
+                                                                {chapter.completed ? 'נלמד ✓' : isOverdue ? 'עבר הזמן' : chapter.dueDate === '' ? 'ללא תאריך' : 'ממתין'}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -391,10 +388,10 @@
                         </div>
                     )}
 
-                    {/* לשונית 2: לוח שנה (גלילה, תאריך מימין, שורת חזרות לפי 7 קטגוריות) */}
+                    {/* לשונית 2: לוח שנה */}
                     {activeTab === 'calendar' && (
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                            <h2 className="text-xl font-bold text-emerald-900 border-b pb-2">לוח שנה ומעקב יומי (גלגול חופשי)</h2>
+                            <h2 className="text-xl font-bold text-emerald-900 border-b pb-2">לוח שנה ומעקב יומי</h2>
                             <div className="max-h-[700px] overflow-y-auto space-y-4 pr-1">
                                 {uniqueDates.map(dateStr => {
                                     const isToday = dateStr === todayStr;
@@ -407,7 +404,6 @@
                                     return (
                                         <div key={dateStr} className={`rounded-xl border p-4 transition ${isYellow ? 'bg-amber-100/90 border-amber-300 shadow-sm' : 'bg-white border-slate-200'}`}>
                                             
-                                            {/* כותרת התאריך - מופיעה מצד ימין */}
                                             <div className="flex items-center justify-between mb-3 border-b border-amber-200/80 pb-2">
                                                 <div className="flex items-center gap-3">
                                                     <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${isToday ? 'bg-amber-400 text-slate-900 shadow-sm' : 'bg-amber-200/80 text-slate-800'}`}>
@@ -417,7 +413,6 @@
                                                 </div>
                                             </div>
 
-                                            {/* שורת 7 הנושאים הקבועים - משימות */}
                                             <div className="grid grid-cols-7 gap-2">
                                                 {FIXED_TOPICS.map(topicName => {
                                                     const topicTasks = dateTasks.filter(t => t.topicName === topicName);
@@ -448,14 +443,12 @@
                                                 })}
                                             </div>
 
-                                            {/* שורת חזרות נפרדת (רקע אפרפר) - מחולקת גם היא ל-7 עמודות לפי קטגוריות */}
                                             <div className="mt-3 bg-slate-200/80 p-3 rounded-lg border border-slate-300 space-y-2">
-                                                <div className="text-xs font-bold text-slate-700">חזרות לימוד (יומי - לפי קטגוריות):</div>
+                                                <div className="text-xs font-bold text-slate-700">חזרות:</div>
                                                 <div className="grid grid-cols-7 gap-2">
                                                     {FIXED_TOPICS.map(topicName => (
-                                                        <div key={`rep-${topicName}`} className="bg-white/80 p-2 rounded border border-slate-200 min-h-[45px] flex flex-col justify-center items-center text-center">
-                                                            <span className="text-[10px] font-bold text-slate-500 mb-0.5">{topicName}</span>
-                                                            <span className="text-[10px] text-slate-400">למעקב בקש לחזרות</span>
+                                                        <div key={`rep-${topicName}`} className="bg-transparent p-2 rounded min-h-[45px] flex flex-col justify-center items-center text-center">
+                                                            {/* משבצת חזרות ריקה ללא כיתוב */}
                                                         </div>
                                                     ))}
                                                 </div>
