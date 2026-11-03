@@ -36,11 +36,11 @@
                             id: 'תורה',
                             name: 'תורה',
                             books: [
-                                { id: 'gen', name: 'בראשית', chapters: GENESIS_PARASHOT.map((p, i) => ({ id: `gen-${i+1}`, name: p, count: 0, dueDate: '', completed: false })) },
-                                { id: 'exo', name: 'שמות', chapters: EXODUS_PARASHOT.map((p, i) => ({ id: `exo-${i+1}`, name: p, count: 0, dueDate: '', completed: false })) },
-                                { id: 'lev', name: 'ויקרא', chapters: LEVITICUS_PARASHOT.map((p, i) => ({ id: `lev-${i+1}`, name: p, count: 0, dueDate: '', completed: false })) },
-                                { id: 'num', name: 'במדבר', chapters: NUMBERS_PARASHOT.map((p, i) => ({ id: `num-${i+1}`, name: p, count: 0, dueDate: '', completed: false })) },
-                                { id: 'deu', name: 'דברים', chapters: DEUTERONOMY_PARASHOT.map((p, i) => ({ id: `deu-${i+1}`, name: p, count: 0, dueDate: '', completed: false })) }
+                                { id: 'gen', name: 'בראשית', chapters: GENESIS_PARASHOT.map((p, i) => ({ id: 'gen-' + (i+1), name: p, count: 0, dueDate: '', completed: false })) },
+                                { id: 'exo', name: 'שמות', chapters: EXODUS_PARASHOT.map((p, i) => ({ id: 'exo-' + (i+1), name: p, count: 0, dueDate: '', completed: false })) },
+                                { id: 'lev', name: 'ויקרא', chapters: LEVITICUS_PARASHOT.map((p, i) => ({ id: 'lev-' + (i+1), name: p, count: 0, dueDate: '', completed: false })) },
+                                { id: 'num', name: 'במדבר', chapters: NUMBERS_PARASHOT.map((p, i) => ({ id: 'num-' + (i+1), name: p, count: 0, dueDate: '', completed: false })) },
+                                { id: 'deu', name: 'דברים', chapters: DEUTERONOMY_PARASHOT.map((p, i) => ({ id: 'deu-' + (i+1), name: p, count: 0, dueDate: '', completed: false })) }
                             ]
                         },
                         { id: 'נביאים', name: 'נביאים', books: [] },
@@ -115,7 +115,8 @@
 
         function App() {
             const [topicsData, setTopicsData] = useState(() => {
-                const saved = localStorage.getItem('study_system_v19') || 
+                const saved = localStorage.getItem('study_system_v20') || 
+                              localStorage.getItem('study_system_v19') || 
                               localStorage.getItem('study_system_v18') || 
                               localStorage.getItem('study_system_v17') || 
                               localStorage.getItem('study_system_v16');
@@ -140,7 +141,7 @@
             const todayRowRef = useRef(null);
 
             useEffect(() => {
-                localStorage.setItem('study_system_v19', JSON.stringify(topicsData));
+                localStorage.setItem('study_system_v20', JSON.stringify(topicsData));
             }, [topicsData]);
 
             useEffect(() => {
@@ -156,8 +157,8 @@
                 if (!bookName || isNaN(totalChapters) || totalChapters <= 0) return;
 
                 const chapters = Array.from({length: totalChapters}, (_, i) => ({
-                    id: `${Date.now()}-${i+1}`,
-                    name: `פרק/סימן ${i+1}`,
+                    id: Date.now() + '-' + (i+1),
+                    name: 'פרק/סימן ' + (i+1),
                     count: 0,
                     dueDate: '',
                     completed: false
@@ -546,7 +547,7 @@
                                                                                 const isOverdueTask = !task.completed && task.dueDate < todayStr;
                                                                                 return (
                                                                                     <div key={task.id} className={`flex items-center justify-between gap-1 p-0.5 rounded text-[9px] border ${task.completed ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : isOverdueTask ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold' : 'bg-slate-50 border-slate-200'}`}>
-                                                                                        <span className={`truncate ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} title={`${task.bookName}: ${task.name}`}>{task.bookName}: {task.name}</span>
+                                                                                        <span className={`truncate ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} title={task.bookName + ': ' + task.name}>{task.bookName}: {task.name}</span>
                                                                                         <input 
                                                                                             type="checkbox" checked={task.completed}
                                                                                             onChange={() => toggleChapterCompletion(task.topicId, task.subId, task.bookId, task.id, task.completed)}
@@ -564,7 +565,7 @@
 
                                                     <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 grid grid-cols-7 gap-1">
                                                         {FIXED_TOPICS.map(topicName => (
-                                                            <div key={`rep-${topicName}`} className="bg-white/80 p-1 rounded border border-slate-200 min-h-[25px] flex items-center justify-center text-center"></div>
+                                                            <div key={'rep-' + topicName} className="bg-white/80 p-1 rounded border border-slate-200 min-h-[25px] flex items-center justify-center text-center"></div>
                                                         ))}
                                                     </div>
                                                 </div>
@@ -585,7 +586,7 @@
                                         <p className="text-xs text-slate-400 text-center py-6">מעולה! אין משימות באיחור.</p>
                                     ) : (
                                         overdueTasks.map(task => (
-                                            <div key={`overdue-${task.id}`} className="bg-rose-50/80 p-2.5 rounded-xl border border-rose-200 text-xs flex flex-col gap-1.5 shadow-2xs">
+                                            <div key={'overdue-' + task.id} className="bg-rose-50/80 p-2.5 rounded-xl border border-rose-200 text-xs flex flex-col gap-1.5 shadow-2xs">
                                                 <div className="flex items-center justify-between font-bold text-rose-900">
                                                     <span className="truncate">{task.bookName}: {task.name}</span>
                                                     <input 
