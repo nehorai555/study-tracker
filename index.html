@@ -57,7 +57,11 @@
 
         function App() {
             const [topicsData, setTopicsData] = useState(() => {
-                const saved = localStorage.getItem('study_system_v15');
+                // בדיקה בגרסאות קודמות כדי לא לאבד נתונים קיימים
+                const saved = localStorage.getItem('study_system_v16') || 
+                              localStorage.getItem('study_system_v15') || 
+                              localStorage.getItem('study_system_v14') || 
+                              localStorage.getItem('study_system_v13');
                 if (saved) return JSON.parse(saved);
                 return FIXED_TOPICS.map(name => ({ id: name, name, books: [] }));
             });
@@ -74,8 +78,11 @@
             const [inputBook, setInputBook] = useState('');
             const [inputTotalChapters, setInputTotalChapters] = useState('');
 
+            // ניהול טווח ימים בלוח השנה לגלילה חופשית ללא הגבלה
+            const [calendarDaysCount, setCalendarDaysCount] = useState(60); // 60 ימים קדימה ואחורה כברירת מחדל
+
             useEffect(() => {
-                localStorage.setItem('study_system_v15', JSON.stringify(topicsData));
+                localStorage.setItem('study_system_v16', JSON.stringify(topicsData));
             }, [topicsData]);
 
             const handleAddBookWithChapters = (e) => {
@@ -97,7 +104,7 @@
                         id: `${Date.now()}-${i}`,
                         name: `פרק/סימן ${i}`,
                         count: 0,
-                        dueDate: '', // ריק עד שהמשתמש יבחר
+                        dueDate: '',
                         completed: false
                     });
                 }
@@ -206,9 +213,9 @@
 
             const todayStr = new Date().toISOString().split('T')[0];
             
-            // יצירת טווח תאריכים לגלילה (למשל, חודש אחורה וחודש קדימה מהיום)
+            // טווח תאריכים לגלילה חופשית קדימה ואחורה
             const uniqueDates = [];
-            for (let i = -30; i <= 30; i++) {
+            for (let i = -calendarDaysCount; i <= calendarDaysCount; i++) {
                 const d = new Date(todayStr);
                 d.setDate(d.getDate() + i);
                 uniqueDates.push(d.toISOString().split('T')[0]);
@@ -360,7 +367,7 @@
                                                                 type="checkbox" checked={chapter.completed} 
                                                                 onChange={() => toggleChapterCompletion(topic.name, book.id, chapter.id, chapter.completed)}
                                                                 className="w-6 h-6 accent-emerald-600 rounded cursor-pointer shrink-0"
-                                                                disabled={chapter.dueDate === ''} // מניעת סימון אם אין תאריך
+                                                                disabled={chapter.dueDate === ''}
                                                             />
                                                             <div>
                                                                 <h4 className={`font-bold text-base ${chapter.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>{chapter.name}</h4>
@@ -388,70 +395,77 @@
                         </div>
                     )}
 
-                    {/* לשונית 2: לוח שנה */}
+                    {/* לשונית 2: לוח שנה מעודכן עם משבצת ימנית צהובה/לבנה וגלילה חופשית */}
                     {activeTab === 'calendar' && (
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                            <h2 className="text-xl font-bold text-emerald-900 border-b pb-2">לוח שנה ומעקב יומי</h2>
-                            <div className="max-h-[700px] overflow-y-auto space-y-4 pr-1">
+                            <div className="flex flex-col sm:flex-row items-center justify-between border-b pb-3 gap-3">
+                                <h2 className="text-xl font-bold text-emerald-900">לוח שנה ומעקב יומי (גלילה חופשית)</h2>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => setCalendarDaysCount(prev => prev + 30)} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200">טען עוד ימים ק Anna/אחורה</button>
+                                </div>
+                            </div>
+
+                            <div className="max-h-[700px] overflow-y-auto space-y-3 pr-1">
                                 {uniqueDates.map(dateStr => {
                                     const isToday = dateStr === todayStr;
                                     const isPast = new Date(dateStr) < new Date(todayStr);
-                                    const isYellow = isPast || isToday;
+                                    const isDateYellow = isPast || isToday; // רק משבצת התאריך הימנית צהובה אם עבר/היום
 
                                     const dateTasks = allTasks.filter(t => t.dueDate === dateStr);
                                     const hebrewDateText = getHebrewDateString(dateStr);
 
                                     return (
-                                        <div key={dateStr} className={`rounded-xl border p-4 transition ${isYellow ? 'bg-amber-100/90 border-amber-300 shadow-sm' : 'bg-white border-slate-200'}`}>
+                                        <div key={dateStr} className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col md:flex-row gap-2 items-stretch">
                                             
-                                            <div className="flex items-center justify-between mb-3 border-b border-amber-200/80 pb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${isToday ? 'bg-amber-400 text-slate-900 shadow-sm' : 'bg-amber-200/80 text-slate-800'}`}>
-                                                        {hebrewDateText} {isToday ? '(היום)' : ''}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500">({dateStr})</span>
-                                                </div>
+                                            {/* משבצת ימנית אחת ארוכה הכוללת את התאריך (צהוב אם עבר/היום, לבן אם עתידי) */}
+                                            <div className={`w-full md:w-56 p-3 rounded-lg border flex flex-col justify-center items-center text-center shrink-0 ${isDateYellow ? 'bg-amber-200/90 border-amber-300 text-slate-900 font-extrabold shadow-sm' : 'bg-white border-slate-300 text-slate-700'}`}>
+                                                <span className="text-sm">{hebrewDateText}</span>
+                                                <span className="text-xs font-normal opacity-80 mt-1">({dateStr}) {isToday ? ' - היום' : ''}</span>
                                             </div>
 
-                                            <div className="grid grid-cols-7 gap-2">
-                                                {FIXED_TOPICS.map(topicName => {
-                                                    const topicTasks = dateTasks.filter(t => t.topicName === topicName);
-                                                    return (
-                                                        <div key={topicName} className="bg-white/95 p-2.5 rounded-lg border border-slate-200 min-h-[85px] flex flex-col justify-between">
-                                                            <div className="text-[11px] font-bold text-emerald-800 border-b pb-1 mb-1">{topicName}</div>
-                                                            <div className="space-y-1.5 flex-1">
-                                                                {topicTasks.length === 0 ? (
-                                                                    <span className="text-[10px] text-slate-300 block text-center mt-3">-</span>
-                                                                ) : (
-                                                                    topicTasks.map(task => {
-                                                                        const isOverdueTask = !task.completed && new Date(task.dueDate) < new Date(todayStr);
-                                                                        return (
-                                                                            <div key={task.id} className={`flex items-center justify-between gap-1 p-1 rounded text-[11px] border ${task.completed ? 'bg-emerald-50 border-emerald-200' : isOverdueTask ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold' : 'bg-slate-50 border-slate-200'}`}>
-                                                                                <span className={`truncate ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} title={`${task.bookName}: ${task.name}`}>{task.bookName}: {task.name}</span>
-                                                                                <input 
-                                                                                    type="checkbox" checked={task.completed}
-                                                                                    onChange={() => toggleChapterCompletion(task.topicName, task.bookId, task.id, task.completed)}
-                                                                                    className="accent-emerald-600 w-4 h-4 shrink-0 cursor-pointer"
-                                                                                />
-                                                                            </div>
-                                                                        );
-                                                                    })
-                                                                )}
+                                            {/* משמאלו: שתי שורות (עליונה למשימות לפי קטגוריות לבנות, תחתונה אפורה לחזרות) */}
+                                            <div className="flex-1 flex flex-col gap-2">
+                                                
+                                                {/* שורה עליונה: משימות לפי 7 הנושאים הקבועים (משבצות לבנות) */}
+                                                <div className="grid grid-cols-7 gap-1.5">
+                                                    {FIXED_TOPICS.map(topicName => {
+                                                        const topicTasks = dateTasks.filter(t => t.topicName === topicName);
+                                                        return (
+                                                            <div key={topicName} className="bg-white p-2 rounded-lg border border-slate-200 min-h-[75px] flex flex-col justify-between shadow-2xs">
+                                                                <div className="text-[10px] font-bold text-emerald-800 border-b pb-0.5 mb-1">{topicName}</div>
+                                                                <div className="space-y-1 flex-1">
+                                                                    {topicTasks.length === 0 ? (
+                                                                        <span className="text-[9px] text-slate-300 block text-center mt-2">-</span>
+                                                                    ) : (
+                                                                        topicTasks.map(task => {
+                                                                            const isOverdueTask = !task.completed && new Date(task.dueDate) < new Date(todayStr);
+                                                                            return (
+                                                                                <div key={task.id} className={`flex items-center justify-between gap-1 p-1 rounded text-[10px] border ${task.completed ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : isOverdueTask ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold' : 'bg-slate-50 border-slate-200'}`}>
+                                                                                    <span className={`truncate ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}`} title={`${task.bookName}: ${task.name}`}>{task.bookName}: {task.name}</span>
+                                                                                    <input 
+                                                                                        type="checkbox" checked={task.completed}
+                                                                                        onChange={() => toggleChapterCompletion(task.topicName, task.bookId, task.id, task.completed)}
+                                                                                        className="accent-emerald-600 w-3.5 h-3.5 shrink-0 cursor-pointer"
+                                                                                    />
+                                                                                </div>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
 
-                                            <div className="mt-3 bg-slate-200/80 p-3 rounded-lg border border-slate-300 space-y-2">
-                                                <div className="text-xs font-bold text-slate-700">חזרות:</div>
-                                                <div className="grid grid-cols-7 gap-2">
+                                                {/* שורה תחתונה: אפורה לחזרות לפי 7 הנושאים הקבועים */}
+                                                <div className="bg-slate-100 p-1.5 rounded-lg border border-slate-200 grid grid-cols-7 gap-1.5">
                                                     {FIXED_TOPICS.map(topicName => (
-                                                        <div key={`rep-${topicName}`} className="bg-transparent p-2 rounded min-h-[45px] flex flex-col justify-center items-center text-center">
-                                                            {/* משבצת חזרות ריקה ללא כיתוב */}
+                                                        <div key={`rep-${topicName}`} className="bg-white/80 p-1.5 rounded border border-slate-200 min-h-[35px] flex items-center justify-center text-center">
+                                                            {/* כאן יופיעו בהמשך החזרות */}
                                                         </div>
                                                     ))}
                                                 </div>
+
                                             </div>
 
                                         </div>
