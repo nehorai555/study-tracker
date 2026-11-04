@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול לימודים וחזרות - 40 ו-101</title>
+    <title>ניהול לימודים וחזרות</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: #f8fafc; color: #1e293b; padding: 12px; direction: rtl; }
@@ -33,7 +33,7 @@
         <header>
             <div>
                 <h1>ניהול לימודים וחזרות</h1>
-                <div class="sub-header">גרסה נקייה להוספה ידנית</div>
+                <div class="sub-header">הוספה ידנית של ספרים ומסכתות</div>
             </div>
             <div class="nav-btns">
                 <button class="nav-btn active" id="btn-curr" onclick="setTab('curriculum')">📖 תוכנית</button>
@@ -47,35 +47,26 @@
     <script>
         const FIXED_TOPICS = ['תנ"ך', 'משנה', 'תלמוד', 'הלכה', 'אמונה', 'מוסר', 'פנימיות'];
 
-        function getInitialData() {
-            return FIXED_TOPICS.map(t => ({
-                id: t, name: t,
-                subCategories: [{ id: t + '-כללי', name: 'כללי', books: [] }]
-            }));
-        }
-
         let state = {
             data: (() => {
                 try {
-                    const saved = localStorage.getItem('study_system_clean_v1');
+                    const saved = localStorage.getItem('study_system_clean_v2');
                     if (saved) return JSON.parse(saved);
                 } catch(e) {}
-                return getInitialData();
+                return FIXED_TOPICS.map(t => ({ id: t, name: t, books: [] }));
             })(),
             tab: 'curriculum',
-            cTop: null, cSub: null, cBook: null,
-            tTop: null, tSub: null, tBook: null
+            cTop: null, cBook: null
         };
 
         function saveData() {
-            try { localStorage.setItem('study_system_clean_v1', JSON.stringify(state.data)); } catch(e) {}
+            try { localStorage.setItem('study_system_clean_v2', JSON.stringify(state.data)); } catch(e) {}
             render();
         }
 
         function setTab(tab) {
             state.tab = tab;
-            state.cTop = null; state.cSub = null; state.cBook = null;
-            state.tTop = null; state.tSub = null; state.tBook = null;
+            state.cTop = null; state.cBook = null;
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             const activeBtn = document.getElementById('btn-' + (tab === 'curriculum' ? 'curr' : tab === 'calendar' ? 'cal' : 'track'));
             if (activeBtn) activeBtn.classList.add('active');
@@ -84,7 +75,7 @@
 
         function renderProgress(done, total) {
             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-            return `<div class="circle-progress" style="--pct: ${pct}%"><span>${pct}%</span></div>`;
+            return `<div class="circle-progress" style="--pct: ${pct}\%"><span>${pct}%</span></div>`;
         }
 
         function render() {
@@ -95,7 +86,7 @@
             if (state.tab === 'curriculum') {
                 if (!state.cTop) {
                     app.innerHTML = `<div class="grid-3">${state.data.map(t => {
-                        const chs = t.subCategories.flatMap(s => s.books.flatMap(b => b.chapters));
+                        const chs = t.books.flatMap(b => b.chapters);
                         const done = chs.filter(c => c.completed).length;
                         return `<div class="card" onclick="state.cTop='${t.id}'; render();">
                             <div><strong>${t.name}</strong><div style="font-size:0.7rem;color:#64748b;margin-top:2px;">${done} מתוך ${chs.length} הושלמו</div></div>
@@ -104,80 +95,15 @@
                     }).join('')}</div>`;
                 } else if (!state.cBook) {
                     const top = state.data.find(t => t.id === state.cTop);
-                    const sub = top.subCategories[0]; // משתמש בקטגוריה הראשית הכללית
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.cTop=null; render();">&rarr; חזרה</button>
+                    app.innerHTML = `<button class="btn btn-sec" onclick="state.cTop=null; render();">&rarr; חזרה לנושאים</button>
                     <h3 style="margin:12px 0;">${top.name}</h3>
                     <div style="background:white; padding:12px; border-radius:12px; margin:12px 0; border:1px solid #e2e8f0;">
-                        <strong style="font-size:0.8rem;">➕ הוסף ספר/מסכת:</strong>
+                        <strong style="font-size:0.8rem;">➕ הוסף ספר או מסכת חדשה:</strong>
                         <form onsubmit="addBook(event)" style="display:flex; gap:8px; margin-top:8px;">
                             <input type="text" id="bName" placeholder="שם הספר/מסכת..." required style="flex:1;">
-                            <input type="number" id="bCount" placeholder="כמות פרקים" min="1" required style="width:100px;">
+                            <input type="number" id="bCount" placeholder="כמות פרקים/דפים" min="1" required style="width:120px;">
                             <button class="btn">הוסף</button>
                         </form>
                     </div>
-                    <div class="grid-3">${sub.books.map(b => {
-                        const done = b.chapters.filter(c => c.completed).length;
-                        return `<div class="card" onclick="state.cBook='${b.id}'; render();">
-                            <div><strong>${b.name}</strong><div style="font-size:0.7rem;color:#64748b;margin-top:2px;">${done} מתוך ${b.chapters.length} הושלמו</div></div>
-                            ${renderProgress(done, b.chapters.length)}
-                        </div>`;
-                    }).join('')}</div>`;
-                } else {
-                    const top = state.data.find(t => t.id === state.cTop);
-                    const sub = top.subCategories[0];
-                    const book = sub.books.find(b => b.id === state.cBook);
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.cBook=null; render();">&rarr; חזרה לספרים</button>
-                    <h3 style="margin:12px 0; font-size:1rem; font-weight:bold;">${top.name} &gt; ${book.name}</h3>
-                    <div>${book.chapters.map(ch => `
-                        <div class="item-row">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <input type="checkbox" ${ch.completed ? 'checked' : ''} ${!ch.dueDate ? 'disabled' : ''} onchange="toggleChap('${top.id}','${book.id}','${ch.id}')" style="width:18px;height:18px;cursor:pointer;">
-                                <span style="font-size:0.8rem; font-weight:bold; ${ch.completed ? 'text-decoration:line-through; color:#94a3b8;' : ''}">${ch.name}</span>
-                            </div>
-                            <input type="date" value="${ch.dueDate}" onchange="updateDate('${top.id}','${book.id}','${ch.id}', this.value)">
-                        </div>
-                    `).join('')}</div>`;
-                }
-            } else if (state.tab === 'calendar') {
-                app.innerHTML = `<div style="background:white; padding:20px; border-radius:12px; text-align:center; border:1px solid #e2e8f0;">תצוגת לוח שנה פעילה. הוסף תאריכים לספרים בלשונית התוכנית כדי לראות אותם כאן.</div>`;
-            } else {
-                app.innerHTML = `<div style="background:white; padding:20px; border-radius:12px; text-align:center; border:1px solid #e2e8f0;">מעקב חזרות 40/101 פעיל.</div>`;
-            }
-        }
-
-        function addBook(e) {
-            e.preventDefault();
-            const name = document.getElementById('bName').value.trim();
-            const count = parseInt(document.getElementById('bCount').value);
-            if (!name || !count) return;
-            const top = state.data.find(t => t.id === state.cTop);
-            const sub = top.subCategories[0];
-            const chapters = Array.from({ length: count }, (_, i) => ({ id: 'ch-' + Date.now() + '-' + i, name: 'פרק ' + (i + 1), count: 0, dueDate: '', completed: false }));
-            sub.books.push({ id: 'b-' + Date.now(), name, chapters });
-            saveData();
-        }
-
-        function toggleChap(tId, bId, chId) {
-            const top = state.data.find(t => t.id === tId);
-            const book = top?.subCategories[0].books.find(b => b.id === bId);
-            const chap = book?.chapters.find(c => c.id === chId);
-            if (chap) {
-                chap.completed = !chap.completed;
-                saveData();
-            }
-        }
-
-        function updateDate(tId, bId, chId, val) {
-            const top = state.data.find(t => t.id === tId);
-            const book = top?.subCategories[0].books.find(b => b.id === bId);
-            const chap = book?.chapters.find(c => c.id === chId);
-            if (chap) {
-                chap.dueDate = val;
-                saveData();
-            }
-        }
-
-        render();
-    </script>
-</body>
-</html>
+                    <div class="grid-3">${top.books.length === 0 ? '<div style="color:#64748b; font-size:0.8rem;">עדיין אין ספרים תחת נושא זה. הוסף למעלה!</div>' : top.books.map(b => {
+                        const done = b.chapters.filter
