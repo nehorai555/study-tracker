@@ -23,24 +23,6 @@
         .btn-sec { background: #e2e8f0; color: #334155; }
         input[type="text"], input[type="number"], input[type="date"] { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px; font-size: 0.75rem; }
         .item-row { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .item-row.completed { background-color: #ecfdf5; border-color: #a7f3d0; }
-        .item-row.overdue { background-color: #fff1f2; border-color: #fecdd3; }
-        .cal-layout { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media(min-width: 1024px) { .cal-layout { grid-template-columns: 3fr 1fr; } }
-        .cal-scroll { max-height: 700px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-left: 4px; }
-        .cal-row { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
-        @media(min-width: 640px) { .cal-row { flex-direction: row; } }
-        .date-box { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; text-align: center; font-size: 0.75rem; flex-shrink: 0; background: #fff; }
-        @media(min-width: 640px) { .date-box { width: 130px; } }
-        .date-box.yellow { background-color: #fef08a; font-weight: bold; border-color: #fde047; }
-        .topics-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; flex: 1; }
-        .topic-col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; min-height: 50px; display: flex; flex-direction: column; justify-content: space-between; }
-        .topic-title { font-size: 0.55rem; font-weight: bold; color: #065f46; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 4px; }
-        .task-chip { font-size: 0.55rem; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 4px; background: white; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; }
-        .task-chip.done { background-color: #d1fae5; text-decoration: line-through; color: #047857; }
-        .task-chip.overdue { background-color: #ffe4e6; border-color: #fca5a5; font-weight: bold; color: #9f1239; }
-        .overdue-box { background: white; border: 1px solid #fecdd3; border-radius: 12px; padding: 12px; max-height: 700px; overflow-y: auto; }
-        .overdue-title { font-size: 0.75rem; font-weight: bold; color: #881337; border-bottom: 1px solid #ffe4e6; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .circle-progress { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(#059669 var(--pct), #e2e8f0 0); display: flex; align-items: center; justify-content: center; position: relative; }
         .circle-progress::before { content: ''; width: 28px; height: 28px; background: white; border-radius: 50%; position: absolute; }
         .circle-progress span { position: relative; font-size: 0.55rem; font-weight: bold; }
@@ -51,7 +33,7 @@
         <header>
             <div>
                 <h1>ניהול לימודים וחזרות</h1>
-                <div class="sub-header">מערכת 40 ו-101</div>
+                <div class="sub-header">גרסה נקייה להוספה ידנית</div>
             </div>
             <div class="nav-btns">
                 <button class="nav-btn active" id="btn-curr" onclick="setTab('curriculum')">📖 תוכנית</button>
@@ -64,133 +46,18 @@
 
     <script>
         const FIXED_TOPICS = ['תנ"ך', 'משנה', 'תלמוד', 'הלכה', 'אמונה', 'מוסר', 'פנימיות'];
-        const P_GEN = ['בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ', 'ויגש', 'ויחי'];
-        const P_EXO = ['שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה', 'כי תשא', 'ויקהל', 'פקודה'];
-        const P_LEV = ['ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים', 'אמור', 'בהר', 'בחוקתי'];
-        const P_NUM = ['במדבר', 'נשא', 'בהעלתך', 'שלח לך', 'קרח', 'חקת', 'בלק', 'פנחס', 'מטות', 'מסעי'];
-        const P_DEU = ['דברים', 'ואתחנן', 'עקב', 'ראה', 'שופטים', 'כי תצא', 'כי תבוא', 'נצבים', 'וילך', 'האזינו', 'וזאת הברכה'];
-
-        const M_ZERAIM = [
-            {name: 'ברכות', chapters: 9}, {name: 'פאה', chapters: 8}, {name: 'דמאי', chapters: 7}, 
-            {name: 'כלאים', chapters: 9}, {name: 'שביעית', chapters: 10}, {name: 'תרומות', chapters: 11}, 
-            {name: 'מעשרות', chapters: 5}, {name: 'מעשר שני', chapters: 5}, {name: 'חלה', chapters: 4}, 
-            {name: 'ערלה', chapters: 3}, {name: 'ביכורים', chapters: 4}
-        ];
-        const M_MOED = [
-            {name: 'שבת', chapters: 24}, {name: 'ערובין', chapters: 10}, {name: 'פסחים', chapters: 10}, 
-            {name: 'שקלים', chapters: 8}, {name: 'יומא', chapters: 8}, {name: 'סוכה', chapters: 5}, 
-            {name: 'ביצה', chapters: 5}, {name: 'ראש השנה', chapters: 4}, {name: 'תענית', chapters: 4}, 
-            {name: 'מגילה', chapters: 4}, {name: 'מועד קטן', chapters: 3}, {name: 'חגיגה', chapters: 3}
-        ];
-        const M_NASHIM = [
-            {name: 'יבמות', chapters: 16}, {name: 'כתובות', chapters: 13}, {name: 'נדרים', chapters: 11}, 
-            {name: 'נזיר', chapters: 9}, {name: 'סוטה', chapters: 9}, {name: 'גיטין', chapters: 9}, 
-            {name: 'קידושין', chapters: 4}
-        ];
-        const M_NEZIKIN = [
-            {name: 'בבא קמא', chapters: 10}, {name: 'בבא מציעא', chapters: 10}, {name: 'בבא בתרא', chapters: 10}, 
-            {name: 'סנהדרין', chapters: 11}, {name: 'מכות', chapters: 3}, {name: 'שבועות', chapters: 8}, 
-            {name: 'עדיות', chapters: 8}, {name: 'עבודה זרה', chapters: 5}, {name: 'אבות', chapters: 6}, 
-            {name: 'הוריות', chapters: 3}
-        ];
-        const M_KODASHIM = [
-            {name: 'זבחים', chapters: 14}, {name: 'מנחות', chapters: 13}, {name: 'חולין', chapters: 12}, 
-            {name: 'בכורות', chapters: 9}, {name: 'ערכין', chapters: 9}, {name: 'תמורה', chapters: 7}, 
-            {name: 'כריתות', chapters: 6}, {name: 'מעילה', chapters: 6}, {name: 'תמיד', chapters: 7}, 
-            {name: 'מידות', chapters: 5}, {name: 'קינים', chapters: 3}
-        ];
-        const M_TOHAROT = [
-            {name: 'כלים', chapters: 30}, {name: 'אהלות', chapters: 18}, {name: 'נגעים', chapters: 14}, 
-            {name: 'פרה', chapters: 12}, {name: 'טהרות', chapters: 10}, {name: 'מקואות', chapters: 10}, 
-            {name: 'נדה', chapters: 10}, {name: 'מכשירין', chapters: 6}, {name: 'זבים', chapters: 5}, 
-            {name: 'טבול יום', chapters: 4}, {name: 'ידים', chapters: 4}, {name: 'עוקצין', chapters: 3}
-        ];
-
-        const B_ZERAIM = [{name: 'ברכות', chapters: 64}];
-        const B_MOED = [
-            {name: 'שבת', chapters: 157}, {name: 'ערובין', chapters: 105}, {name: 'פסחים', chapters: 121}, 
-            {name: 'שקלים', chapters: 22}, {name: 'יומא', chapters: 88}, {name: 'סוכה', chapters: 56}, 
-            {name: 'ביצה', chapters: 40}, {name: 'ראש השנה', chapters: 35}, {name: 'תענית', chapters: 31}, 
-            {name: 'מגילה', chapters: 32}, {name: 'מועד קטן', chapters: 29}, {name: 'חגיגה', chapters: 27}
-        ];
-        const B_NASHIM = [
-            {name: 'יבמות', chapters: 122}, {name: 'כתובות', chapters: 112}, {name: 'נדרים', chapters: 91}, 
-            {name: 'נזיר', chapters: 66}, {name: 'סוטה', chapters: 49}, {name: 'גיטין', chapters: 90}, 
-            {name: 'קידושין', chapters: 82}
-        ];
-        const B_NEZIKIN = [
-            {name: 'בבא קמא', chapters: 119}, {name: 'בבא מציעא', chapters: 119}, {name: 'בבא בתרא', chapters: 176}, 
-            {name: 'סנהדרין', chapters: 113}, {name: 'מכות', chapters: 24}, {name: 'שבועות', chapters: 49}, 
-            {name: 'עבודה זרה', chapters: 76}, {name: 'הוריות', chapters: 14}
-        ];
-        const B_KODASHIM = [
-            {name: 'זבחים', chapters: 120}, {name: 'מנחות', chapters: 110}, {name: 'חולין', chapters: 142}, 
-            {name: 'בכורות', chapters: 61}, {name: 'ערכין', chapters: 34}, {name: 'תמורה', chapters: 34}, 
-            {name: 'כריתות', chapters: 28}, {name: 'מעילה', chapters: 22}, {name: 'תמיד', chapters: 33}
-        ];
-        const B_TOHAROT = [{name: 'נדה', chapters: 73}];
-
-        function makeBooks(list) {
-            return list.map((b, idx) => ({
-                id: 'b-' + idx + '-' + Date.now(),
-                name: b.name,
-                chapters: Array.from({ length: b.chapters }, (_, i) => ({
-                    id: 'ch-' + idx + '-' + i,
-                    name: 'פרק/דף ' + (i + 1),
-                    count: 0,
-                    dueDate: '',
-                    completed: false
-                }))
-            }));
-        }
 
         function getInitialData() {
-            return [
-                {
-                    id: 'תנ"ך', name: 'תנ"ך',
-                    subCategories: [
-                        { id: 'תורה', name: 'תורה', books: [
-                            { id: 'g', name: 'בראשית', chapters: P_GEN.map((n, i) => ({ id: 'g-'+i, name: n, count: 0, dueDate: '', completed: false })) },
-                            { id: 'e', name: 'שמות', chapters: P_EXO.map((n, i) => ({ id: 'e-'+i, name: n, count: 0, dueDate: '', completed: false })) },
-                            { id: 'l', name: 'ויקרא', chapters: P_LEV.map((n, i) => ({ id: 'l-'+i, name: n, count: 0, dueDate: '', completed: false })) },
-                            { id: 'n', name: 'במדבר', chapters: P_NUM.map((n, i) => ({ id: 'n-'+i, name: n, count: 0, dueDate: '', completed: false })) },
-                            { id: 'd', name: 'דברים', chapters: P_DEU.map((n, i) => ({ id: 'd-'+i, name: n, count: 0, dueDate: '', completed: false })) }
-                        ]},
-                        { id: 'נביאים', name: 'נביאים', books: [] },
-                        { id: 'כתובים', name: 'כתובים', books: [] }
-                    ]
-                },
-                {
-                    id: 'משנה', name: 'משנה',
-                    subCategories: [
-                        { id: 'מ-זרעים', name: 'סדר זרעים', books: makeBooks(M_ZERAIM) },
-                        { id: 'מ-מועד', name: 'סדר מועד', books: makeBooks(M_MOED) },
-                        { id: 'מ-נשים', name: 'סדר נשים', books: makeBooks(M_NASHIM) },
-                        { id: 'מ-נזיקין', name: 'סדר נזיקין', books: makeBooks(M_NEZIKIN) },
-                        { id: 'מ-קודשים', name: 'סדר קודשים', books: makeBooks(M_KODASHIM) },
-                        { id: 'מ-טהרות', name: 'סדר טהרות', books: makeBooks(M_TOHAROT) }
-                    ]
-                },
-                {
-                    id: 'תלמוד', name: 'תלמוד',
-                    subCategories: [
-                        { id: 'ת-זרעים', name: 'סדר זרעים', books: makeBooks(B_ZERAIM) },
-                        { id: 'ת-מועד', name: 'סדר מועד', books: makeBooks(B_MOED) },
-                        { id: 'ת-נשים', name: 'סדר נשים', books: makeBooks(B_NASHIM) },
-                        { id: 'ת-נזיקין', name: 'סדר נזיקין', books: makeBooks(B_NEZIKIN) },
-                        { id: 'ת-קודשים', name: 'סדר קודשים', books: makeBooks(B_KODASHIM) },
-                        { id: 'ת-טהרות', name: 'סדר טהרות', books: makeBooks(B_TOHAROT) }
-                    ]
-                },
-                ...['הלכה', 'אמונה', 'מוסר', 'פנימיות'].map(t => ({ id: t, name: t, subCategories: [{ id: t+'-כללי', name: 'כללי', books: [] }] }))
-            ];
+            return FIXED_TOPICS.map(t => ({
+                id: t, name: t,
+                subCategories: [{ id: t + '-כללי', name: 'כללי', books: [] }]
+            }));
         }
 
         let state = {
             data: (() => {
                 try {
-                    // איפוס מוחלט לגרסה חדשה נקייה כדי למנוע תקיעות זיכרון
-                    const saved = localStorage.getItem('study_system_v95');
+                    const saved = localStorage.getItem('study_system_clean_v1');
                     if (saved) return JSON.parse(saved);
                 } catch(e) {}
                 return getInitialData();
@@ -201,7 +68,7 @@
         };
 
         function saveData() {
-            try { localStorage.setItem('study_system_v95', JSON.stringify(state.data)); } catch(e) {}
+            try { localStorage.setItem('study_system_clean_v1', JSON.stringify(state.data)); } catch(e) {}
             render();
         }
 
@@ -213,19 +80,6 @@
             const activeBtn = document.getElementById('btn-' + (tab === 'curriculum' ? 'curr' : tab === 'calendar' ? 'cal' : 'track'));
             if (activeBtn) activeBtn.classList.add('active');
             render();
-            if (tab === 'calendar') {
-                setTimeout(() => {
-                    const todayEl = document.getElementById('today-row');
-                    if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
-        }
-
-        function getHebrewDate(dStr) {
-            try {
-                const d = new Date(dStr);
-                return isNaN(d) ? dStr : new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
-            } catch { return dStr; }
         }
 
         function renderProgress(done, total) {
@@ -248,25 +102,15 @@
                             ${renderProgress(done, chs.length)}
                         </div>`;
                     }).join('')}</div>`;
-                } else if (!state.cSub) {
-                    const top = state.data.find(t => t.id === state.cTop);
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.cTop=null; render();">&rarr; חזרה</button>
-                    <div class="grid-3" style="margin-top:12px;">${top.subCategories.map(s => {
-                        const chs = s.books.flatMap(b => b.chapters);
-                        const done = chs.filter(c => c.completed).length;
-                        return `<div class="card" onclick="state.cSub='${s.id}'; render();">
-                            <div><strong>${s.name}</strong><div style="font-size:0.7rem;color:#64748b;margin-top:2px;">${done} מתוך ${chs.length} הושלמו</div></div>
-                            ${renderProgress(done, chs.length)}
-                        </div>`;
-                    }).join('')}</div>`;
                 } else if (!state.cBook) {
                     const top = state.data.find(t => t.id === state.cTop);
-                    const sub = top.subCategories.find(s => s.id === state.cSub);
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.cSub=null; render();">&rarr; חזרה</button>
+                    const sub = top.subCategories[0]; // משתמש בקטגוריה הראשית הכללית
+                    app.innerHTML = `<button class="btn btn-sec" onclick="state.cTop=null; render();">&rarr; חזרה</button>
+                    <h3 style="margin:12px 0;">${top.name}</h3>
                     <div style="background:white; padding:12px; border-radius:12px; margin:12px 0; border:1px solid #e2e8f0;">
-                        <strong style="font-size:0.8rem;">➕ הוסף ספר/מסכת חדשה:</strong>
+                        <strong style="font-size:0.8rem;">➕ הוסף ספר/מסכת:</strong>
                         <form onsubmit="addBook(event)" style="display:flex; gap:8px; margin-top:8px;">
-                            <input type="text" id="bName" placeholder="שם הספר..." required style="flex:1;">
+                            <input type="text" id="bName" placeholder="שם הספר/מסכת..." required style="flex:1;">
                             <input type="number" id="bCount" placeholder="כמות פרקים" min="1" required style="width:100px;">
                             <button class="btn">הוסף</button>
                         </form>
@@ -280,129 +124,24 @@
                     }).join('')}</div>`;
                 } else {
                     const top = state.data.find(t => t.id === state.cTop);
-                    const sub = top.subCategories.find(s => s.id === state.cSub);
+                    const sub = top.subCategories[0];
                     const book = sub.books.find(b => b.id === state.cBook);
                     app.innerHTML = `<button class="btn btn-sec" onclick="state.cBook=null; render();">&rarr; חזרה לספרים</button>
-                    <h3 style="margin:12px 0; font-size:1rem; font-weight:bold;">${top.name} &gt; ${sub.name} &gt; ${book.name}</h3>
-                    <div>${book.chapters.map(ch => {
-                        const isOver = !ch.completed && ch.dueDate && ch.dueDate < today;
-                        return `<div class="item-row ${ch.completed ? 'completed' : isOver ? 'overdue' : ''}">
+                    <h3 style="margin:12px 0; font-size:1rem; font-weight:bold;">${top.name} &gt; ${book.name}</h3>
+                    <div>${book.chapters.map(ch => `
+                        <div class="item-row">
                             <div style="display:flex; align-items:center; gap:8px;">
-                                <input type="checkbox" ${ch.completed ? 'checked' : ''} ${!ch.dueDate ? 'disabled' : ''} onchange="toggleChap('${top.id}','${sub.id}','${book.id}','${ch.id}')" style="width:18px;height:18px;cursor:pointer;">
+                                <input type="checkbox" ${ch.completed ? 'checked' : ''} ${!ch.dueDate ? 'disabled' : ''} onchange="toggleChap('${top.id}','${book.id}','${ch.id}')" style="width:18px;height:18px;cursor:pointer;">
                                 <span style="font-size:0.8rem; font-weight:bold; ${ch.completed ? 'text-decoration:line-through; color:#94a3b8;' : ''}">${ch.name}</span>
                             </div>
-                            <input type="date" value="${ch.dueDate}" onchange="updateDate('${top.id}','${sub.id}','${book.id}','${ch.id}', this.value)">
-                        </div>`;
-                    }).join('')}</div>`;
+                            <input type="date" value="${ch.dueDate}" onchange="updateDate('${top.id}','${book.id}','${ch.id}', this.value)">
+                        </div>
+                    `).join('')}</div>`;
                 }
             } else if (state.tab === 'calendar') {
-                const allTasks = state.data.flatMap(t => t.subCategories.flatMap(s => s.books.flatMap(b => b.chapters.filter(c => c.dueDate).map(c => ({ ...c, tId: t.id, tName: t.name, sId: s.id, bId: b.id, bName: b.name })))));
-                const overdue = allTasks.filter(c => !c.completed && c.dueDate < today);
-                const dates = Array.from({ length: 361 }, (_, i) => {
-                    const d = new Date(today);
-                    d.setDate(d.getDate() + i - 180);
-                    return d.toISOString().split('T')[0];
-                });
-
-                app.innerHTML = `<div class="cal-layout">
-                    <div class="cal-scroll">
-                        ${dates.map(dStr => {
-                            const isToday = dStr === today;
-                            const isYellow = dStr <= today;
-                            const dTasks = allTasks.filter(t => t.dueDate === dStr);
-                            return `<div class="cal-row" ${isToday ? 'id="today-row"' : ''}>
-                                <div class="date-box ${isYellow ? 'yellow' : ''}">
-                                    <div>${getHebrewDate(dStr)}</div>
-                                    <div style="font-size:0.6rem; opacity:0.7;">(${dStr})${isToday ? ' - היום' : ''}</div>
-                                </div>
-                                <div class="topics-grid">
-                                    ${FIXED_TOPICS.map(top => {
-                                        const tTasks = dTasks.filter(t => t.tName === top);
-                                        return `<div class="topic-col">
-                                            <div class="topic-title">${top}</div>
-                                            <div>${tTasks.map(t => `
-                                                <div class="task-chip ${t.completed ? 'done' : t.dueDate < today ? 'overdue' : ''}">
-                                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.bName}: ${t.name}</span>
-                                                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleChap('${t.tId}','${t.sId}','${t.bId}','${t.id}')" style="width:12px;height:12px;">
-                                                </div>
-                                            `).join('')}</div>
-                                        </div>`;
-                                    }).join('')}
-                                </div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                    <div class="overdue-box">
-                        <div class="overdue-title">
-                            <span>⚠️ משימות שלא בוצעו</span>
-                            <span style="background:#ffe4e6; color:#9f1239; padding:2px 6px; border-radius:10px;">${overdue.length}</span>
-                        </div>
-                        <div>${overdue.length === 0 ? '<div style="font-size:0.75rem; color:#94a3b8; text-align:center; padding:20px 0;">אין משימות באיחור!</div>' : overdue.map(t => `
-                            <div style="background:#fff1f2; border:1px solid #fecdd3; padding:8px; border-radius:6px; margin-bottom:6px; font-size:0.75rem; display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-weight:bold; color:#881337;">${t.bName}: ${t.name}</div>
-                                    <div style="font-size:0.65rem; color:#9f1239;">יעד: ${t.dueDate}</div>
-                                </div>
-                                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleChap('${t.tId}','${t.sId}','${t.bId}','${t.id}')" style="width:16px;height:16px;">
-                            </div>
-                        `).join('')}</div>
-                    </div>
-                </div>`;
-            } else if (state.tab === 'tracking') {
-                if (!state.tTop) {
-                    app.innerHTML = `<div class="grid-3">${state.data.map(t => `
-                        <div class="card" onclick="state.tTop='${t.id}'; render();">
-                            <strong>${t.name}</strong>
-                            <span>&larr;</span>
-                        </div>
-                    `).join('')}</div>`;
-                } else if (!state.tSub) {
-                    const top = state.data.find(t => t.id === state.tTop);
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.tTop=null; render();">&rarr; חזרה</button>
-                    <div class="grid-3" style="margin-top:12px;">${top.subCategories.map(s => `
-                        <div class="card" onclick="state.tSub='${s.id}'; render();">
-                            <strong>${s.name}</strong>
-                            <span>&larr;</span>
-                        </div>
-                    `).join('')}</div>`;
-                } else if (!state.tBook) {
-                    const top = state.data.find(t => t.id === state.tTop);
-                    const sub = top.subCategories.find(s => s.id === state.tSub);
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.tSub=null; render();">&rarr; חזרה</button>
-                    <div class="grid-3" style="margin-top:12px;">${sub.books.map(b => {
-                        const active = b.chapters.filter(c => c.completed);
-                        if (active.length === 0) return '';
-                        return `<div class="card" onclick="state.tBook='${b.id}'; render();">
-                            <div><strong>${b.name}</strong><div style="font-size:0.7rem;color:#64748b;">${active.length} פרקים במעקב</div></div>
-                            <span>&larr;</span>
-                        </div>`;
-                    }).join('')}</div>`;
-                } else {
-                    const top = state.data.find(t => t.id === state.tTop);
-                    const sub = top.subCategories.find(s => s.id === state.tSub);
-                    const book = sub.books.find(b => b.id === state.tBook);
-                    const active = book.chapters.filter(c => c.completed);
-                    app.innerHTML = `<button class="btn btn-sec" onclick="state.tBook=null; render();">&rarr; חזרה</button>
-                    <h3 style="margin:12px 0; font-size:1rem; font-weight:bold;">${top.name} &gt; ${sub.name} &gt; ${book.name}</h3>
-                    <div>${active.map(ch => {
-                        const cnt = ch.count || 0;
-                        const tgt = cnt <= 40 ? 40 : 101;
-                        return `<div class="item-row">
-                            <div>
-                                <strong style="font-size:0.8rem;">${ch.name}</strong>
-                                <div style="font-size:0.7rem; color:#64748b;">חזרות: ${cnt} / ${tgt}</div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                ${renderProgress(cnt, tgt)}
-                                <div style="display:flex; gap:4px; background:#f1f5f9; padding:2px; border-radius:6px;">
-                                    <button class="btn" style="padding:2px 8px;" onclick="updateCnt('${top.id}','${sub.id}','${book.id}','${ch.id}', -1)">-</button>
-                                    <span style="font-size:0.8rem; font-weight:bold; min-width:20px; text-align:center; align-self:center;">${cnt}</span>
-                                    <button class="btn" style="padding:2px 8px;" onclick="updateCnt('${top.id}','${sub.id}','${book.id}','${ch.id}', 1)">+</button>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('')}</div>`;
-                }
+                app.innerHTML = `<div style="background:white; padding:20px; border-radius:12px; text-align:center; border:1px solid #e2e8f0;">תצוגת לוח שנה פעילה. הוסף תאריכים לספרים בלשונית התוכנית כדי לראות אותם כאן.</div>`;
+            } else {
+                app.innerHTML = `<div style="background:white; padding:20px; border-radius:12px; text-align:center; border:1px solid #e2e8f0;">מעקב חזרות 40/101 פעיל.</div>`;
             }
         }
 
@@ -412,16 +151,15 @@
             const count = parseInt(document.getElementById('bCount').value);
             if (!name || !count) return;
             const top = state.data.find(t => t.id === state.cTop);
-            const sub = top.subCategories.find(s => s.id === state.cSub);
+            const sub = top.subCategories[0];
             const chapters = Array.from({ length: count }, (_, i) => ({ id: 'ch-' + Date.now() + '-' + i, name: 'פרק ' + (i + 1), count: 0, dueDate: '', completed: false }));
             sub.books.push({ id: 'b-' + Date.now(), name, chapters });
             saveData();
         }
 
-        function toggleChap(tId, sId, bId, chId) {
+        function toggleChap(tId, bId, chId) {
             const top = state.data.find(t => t.id === tId);
-            const sub = top?.subCategories.find(s => s.id === sId);
-            const book = sub?.books.find(b => b.id === bId);
+            const book = top?.subCategories[0].books.find(b => b.id === bId);
             const chap = book?.chapters.find(c => c.id === chId);
             if (chap) {
                 chap.completed = !chap.completed;
@@ -429,24 +167,12 @@
             }
         }
 
-        function updateDate(tId, sId, bId, chId, val) {
+        function updateDate(tId, bId, chId, val) {
             const top = state.data.find(t => t.id === tId);
-            const sub = top?.subCategories.find(s => s.id === sId);
-            const book = sub?.books.find(b => b.id === bId);
+            const book = top?.subCategories[0].books.find(b => b.id === bId);
             const chap = book?.chapters.find(c => c.id === chId);
             if (chap) {
                 chap.dueDate = val;
-                saveData();
-            }
-        }
-
-        function updateCnt(tId, sId, bId, chId, delta) {
-            const top = state.data.find(t => t.id === tId);
-            const sub = top?.subCategories.find(s => s.id === sId);
-            const book = sub?.books.find(b => b.id === bId);
-            const chap = book?.chapters.find(c => c.id === chId);
-            if (chap) {
-                chap.count = Math.max(0, Math.min(101, (chap.count || 0) + delta));
                 saveData();
             }
         }
