@@ -3,33 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>בדיקת שגיאות מהפלאפון</title>
+    <title>ניהול לימודים וחזרות - 40 ו-101</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; padding: 12px; direction: rtl; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background-color: #047857; color: white; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        @media(min-width: 640px) { header { flex-direction: row; justify-content: space-between; align-items: center; } }
+        h1 { font-size: 1.25rem; font-weight: bold; }
+        .sub-header { font-size: 0.75rem; color: #d1fae5; }
+        .nav-btns { display: flex; gap: 4px; background-color: #065f46; padding: 4px; border-radius: 8px; }
+        .nav-btn { background: transparent; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
+        .nav-btn.active { background: white; color: #065f46; font-weight: bold; }
+        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media(min-width: 640px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .card:hover { border-color: #059669; }
+        .btn { background: #059669; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
+        .btn-sec { background: #e2e8f0; color: #334155; }
+        input[type="text"], input[type="number"], input[type="date"] { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px; font-size: 0.75rem; }
+        .item-row { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .item-row.completed { background-color: #ecfdf5; border-color: #a7f3d0; }
+        .item-row.overdue { background-color: #fff1f2; border-color: #fecdd3; }
+        .cal-layout { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media(min-width: 1024px) { .cal-layout { grid-template-columns: 3fr 1fr; } }
+        .cal-scroll { max-height: 700px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-left: 4px; }
+        .cal-row { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+        @media(min-width: 640px) { .cal-row { flex-direction: row; } }
+        .date-box { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; text-align: center; font-size: 0.75rem; flex-shrink: 0; background: #fff; }
+        @media(min-width: 640px) { .date-box { width: 130px; } }
+        .date-box.yellow { background-color: #fef08a; font-weight: bold; border-color: #fde047; }
+        .topics-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; flex: 1; }
+        .topic-col { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; min-height: 50px; display: flex; flex-direction: column; justify-content: space-between; }
+        .topic-title { font-size: 0.55rem; font-weight: bold; color: #065f46; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 4px; }
+        .task-chip { font-size: 0.55rem; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 4px; background: white; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; }
+        .task-chip.done { background-color: #d1fae5; text-decoration: line-through; color: #047857; }
+        .task-chip.overdue { background-color: #ffe4e6; border-color: #fca5a5; font-weight: bold; color: #9f1239; }
+        .overdue-box { background: white; border: 1px solid #fecdd3; border-radius: 12px; padding: 12px; max-height: 700px; overflow-y: auto; }
+        .overdue-title { font-size: 0.75rem; font-weight: bold; color: #881337; border-bottom: 1px solid #ffe4e6; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .circle-progress { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(#059669 var(--pct), #e2e8f0 0); display: flex; align-items: center; justify-content: center; position: relative; }
+        .circle-progress::before { content: ''; width: 28px; height: 28px; background: white; border-radius: 50%; position: absolute; }
+        .circle-progress span { position: relative; font-size: 0.55rem; font-weight: bold; }
+    </style>
 </head>
-<body style="font-family:sans-serif; padding:20px; background:#f8fafc; color:#1e293b;">
-    <h2>בדיקת תקלות למובייל</h2>
-    <div id="log" style="background:#fff; border:1px solid #cbd5e1; padding:15px; border-radius:8px; margin-top:15px; white-space:pre-wrap; font-family:monospace; font-size:12px;">מאתחל בדיקה...</div>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>ניהול לימודים וחזרות</h1>
+                <div class="sub-header">מערכת 40 ו-101</div>
+            </div>
+            <div class="nav-btns">
+                <button class="nav-btn active" id="btn-curr" onclick="setTab('curriculum')">📖 תוכנית</button>
+                <button class="nav-btn" id="btn-cal" onclick="setTab('calendar')">📅 לוח שנה</button>
+                <button class="nav-btn" id="btn-track" onclick="setTab('tracking')">📚 חזרות</button>
+            </div>
+        </header>
+        <div id="app"></div>
+    </div>
 
     <script>
-        const logBox = document.getElementById('log');
-        function addLog(text, isError = false) {
-            logBox.innerHTML += `<div style="color: ${isError ? 'red' : 'green'}; margin-top:5px;">${text}</div>`;
-        }
+        const FIXED_TOPICS = ['תנ"ך', 'משנה', 'תלמוד', 'הלכה', 'אמונה', 'מוסר', 'פנימיות'];
+        const P_GEN = ['בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ', 'ויגש', 'ויחי'];
+        const P_EXO = ['שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה', 'כי תשא', 'ויקהל', 'פקודה'];
+        const P_LEV = ['ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים', 'אמור', 'בהר', 'בחוקתי'];
+        const P_NUM = ['במדבר', 'נשא', 'בהעלתך', 'שלח לך', 'קרח', 'חקת', 'בלק', 'פנחס', 'מטות', 'מסעי'];
+        const P_DEU = ['דברים', 'ואתחנן', 'עקב', 'ראה', 'שופטים', 'כי תצא', 'כי תבוא', 'נצבים', 'וילך', 'האזינו', 'וזאת הברכה'];
 
-        window.onerror = function(msg, url, line, col) {
-            addLog(`שגיאה: ${msg} (שורה: ${line})`, true);
-            return true;
-        };
-
-        addLog("בודק LocalStorage...");
-        try {
-            localStorage.setItem('test_key', '123');
-            localStorage.removeItem('test_key');
-            addLog("LocalStorage תקין לחלוטין.");
-        } catch(e) {
-            addLog("שגיאה ב-LocalStorage: " + e.message, true);
-        }
-
-        addLog("המערכת מוכנה להרצה.");
-    </script>
-</body>
-</html>
+        const M_ZERAIM = [
+            {name: 'ברכות', chapters: 9}, {name: 'פאה', chapters: 8}, {name: 'דמאי', chapters: 7}, 
+            {name: 'כלאים', chapters: 9}, {name: 'שביעית', chapters: 10}, {name: 'תרומות', chapters: 11}, 
+            {name: 'מעשרות', chapters: 5}, {name: 'מעשר שני', chapters: 5}, {name: 'חלה', chapters: 4}, 
+            {name: 'ערלה', chapters: 3}, {name: 'ביכורים', chapters: 4}
+        ];
+        const M_MOED = [
+            {name: 'שבת', chapters: 24}, {name: 'ערובין', chapters: 10}, {name: 'פסחים', chapters: 10}, 
+            {name: 'שקלים', chapters: 8}, {name: 'יומא', chapters: 8}, {name: 'סוכה', chapters: 5}, 
+            {name: 'ביצה', chapters: 5}, {name: 'ראש השנה', chapters: 4}, {name: 'תענית', chapters: 4}, 
+            {name: 'מגילה', chapters: 4}, {name: 'מועד קטן', chapters: 3}, {name: 'חגיגה', chapters: 3}
+        ];
+        const M_NASHIM = [
+            {name: 'יבמות', chapters: 16}, {name: 'כתובות', chapters: 13}, {name: 'נדרים', chapters: 11}, 
+            {name: 'נזיר', chapters: 9}, {name: 'סוטה', chapters: 9}, {name: 'גיטין', chapters: 9}, 
+            {name: 'קידושין', chapters: 4}
+        ];
+        const M_NEZIKIN = [
+            {name: 'בבא קמא', chapters: 10}, {name: 'בבא מציעא', chapters: 10}, {name: 'בבא בתרא', chapters: 10}, 
+            {name: 'סנהדרין', chapters: 11}, {name: 'מכות', chapters: 3}, {name: 'שבועות', chapters: 8}, 
+            {name: 'עדיות', chapters: 8}, {name: 'עבודה זרה', chapters: 5}, {name: 'אבות', chapters: 6}, 
+            {name: 'הוריות', chapters: 3}
+        ];
+        const M_KODASHIM = [
+            {name: 'זבחים', chapters: 14}, {name: 'מנחות', chapters: 13}, {name: 'חולין', chapters: 12}, 
+            {name: 'בכורות', chapters: 9}, {name: 'ערכין', chapters: 9}, {name: 'תמורה', chapters: 7}, 
+            {name: 'כריתות', chapters: 6}, {name: 'מעילה', chapters: 6}, {name: 'ת
